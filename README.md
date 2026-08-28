@@ -1,2 +1,2091 @@
-# Burger-Blast
-Jeu de cuisine 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Burger Blast</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    user-select:none;
+}
+
+body{
+    margin:0;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+    background:#171717;
+    color:white;
+}
+
+/* =========================
+   JEU
+========================= */
+
+#game{
+    width:100vw;
+    height:100vh;
+    display:grid;
+
+    /* Cuisine plus basse */
+    grid-template-rows:
+        70px
+        minmax(250px,1fr)
+        390px;
+
+    overflow:hidden;
+}
+
+/* =========================
+   BARRE DU HAUT
+========================= */
+
+#topbar{
+    background:linear-gradient(90deg,#ff8500,#ff4d00);
+    border-bottom:5px solid #9e3100;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 25px;
+
+    z-index:100;
+}
+
+.logo{
+    font-size:24px;
+    font-weight:900;
+}
+
+.stats{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.stat{
+    background:rgba(0,0,0,.25);
+    padding:9px 14px;
+    border-radius:12px;
+    font-weight:bold;
+}
+
+#pauseBtn{
+    background:#222;
+    color:white;
+
+    border:2px solid white;
+    border-radius:10px;
+
+    padding:8px 14px;
+
+    font-weight:bold;
+    cursor:pointer;
+    font-size:13px;
+}
+
+#pauseBtn:hover{
+    background:#444;
+}
+
+/* =========================
+   RESTAURANT
+========================= */
+
+#restaurant{
+    position:relative;
+    min-height:0;
+    overflow:hidden;
+
+    background:linear-gradient(
+        to bottom,
+        #e8c18c 0%,
+        #e8c18c 68%,
+        #8b5737 68%,
+        #61371f 100%
+    );
+}
+
+#wallPattern{
+    position:absolute;
+
+    inset:0 0 32% 0;
+
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(255,255,255,.13) 0 4px,
+            transparent 4px 120px
+        );
+}
+
+/* =========================
+   LUMIERES
+========================= */
+
+.light{
+    position:absolute;
+
+    width:16px;
+    height:16px;
+
+    background:#fff0a3;
+
+    border-radius:50%;
+
+    box-shadow:0 0 20px #fff0a3;
+
+    animation:pulse 2s infinite alternate;
+}
+
+.light:nth-of-type(1){
+    left:10%;
+    top:30%;
+}
+
+.light:nth-of-type(2){
+    right:10%;
+    top:25%;
+    animation-delay:.5s;
+}
+
+.light:nth-of-type(3){
+    left:22%;
+    top:50%;
+    animation-delay:1s;
+}
+
+.light:nth-of-type(4){
+    right:22%;
+    top:48%;
+    animation-delay:1.5s;
+}
+
+@keyframes pulse{
+
+    from{
+        opacity:.4;
+        transform:scale(.8);
+    }
+
+    to{
+        opacity:1;
+        transform:scale(1.2);
+    }
+
+}
+
+/* =========================
+   PANNEAU
+========================= */
+
+#restaurantSign{
+    position:absolute;
+
+    top:15px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:#d83b20;
+
+    border:6px solid #ffd34e;
+    border-radius:16px;
+
+    padding:9px 30px;
+
+    font-size:23px;
+    font-weight:900;
+
+    white-space:nowrap;
+
+    box-shadow:0 6px 0 #8e2211;
+
+    z-index:5;
+}
+
+/* =========================
+   ZONE CLIENT
+========================= */
+
+#customerArea{
+    position:absolute;
+
+    left:50%;
+
+    /* Zone du client plus basse */
+    bottom:-30px;
+
+    transform:translateX(-50%);
+
+    width:400px;
+    height:100%;
+
+    z-index:20;
+
+    overflow:visible;
+}
+
+/* =========================
+   BULLE
+========================= */
+
+#speech{
+    position:absolute;
+
+    top:120px;
+
+    left:50%;
+
+    transform:
+        translateX(-50%)
+        scale(.8);
+
+    width:360px;
+
+    min-height:60px;
+
+    background:white;
+    color:#222;
+
+    padding:10px 18px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+    font-weight:bold;
+    font-size:15px;
+
+    line-height:1.4;
+
+    box-shadow:
+        0 6px 20px
+        rgba(0,0,0,.3);
+
+    opacity:0;
+    visibility:hidden;
+
+    transition:.25s;
+
+    z-index:100;
+}
+
+#speech.show{
+
+    opacity:1;
+    visibility:visible;
+
+    transform:
+        translateX(-50%)
+        scale(1);
+}
+
+#speech::after{
+
+    content:"";
+
+    position:absolute;
+
+    bottom:-13px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    border-left:13px solid transparent;
+    border-right:13px solid transparent;
+
+    border-top:14px solid white;
+}
+
+/* =========================
+   PERSONNAGE
+========================= */
+
+#customer{
+
+    position:absolute;
+
+    /* PERSONNAGE PLUS BAS */
+    bottom:-20px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    text-align:center;
+}
+
+.customerHead{
+
+    width:110px;
+    height:110px;
+
+    background:#f1b58d;
+
+    border-radius:50%;
+
+    margin:auto;
+
+    position:relative;
+
+    border:4px solid
+        rgba(0,0,0,.1);
+
+    z-index:2;
+}
+
+.hair{
+
+    position:absolute;
+
+    top:-4px;
+    left:8px;
+
+    width:86px;
+    height:40px;
+
+    background:#402719;
+
+    border-radius:
+        50px
+        50px
+        10px
+        10px;
+}
+
+.eyes{
+
+    position:absolute;
+
+    top:50px;
+    left:24px;
+
+    width:52px;
+
+    display:flex;
+
+    justify-content:
+        space-between;
+}
+
+.eyes span{
+
+    width:11px;
+    height:11px;
+
+    background:#222;
+
+    border-radius:50%;
+}
+
+.customerBody{
+
+    width:145px;
+    height:145px;
+
+    background:#3978db;
+
+    border-radius:
+        45px
+        45px
+        8px
+        8px;
+
+    margin:-8px auto 0;
+}
+
+.customerName{
+
+    display:inline-block;
+
+    margin-top:4px;
+
+    background:#222;
+
+    padding:4px 10px;
+
+    border-radius:15px;
+
+    font-size:12px;
+
+    font-weight:bold;
+}
+
+/* =========================
+   ANIMATION CLIENT
+========================= */
+
+.arrive{
+    animation:
+        customerArrive
+        .7s
+        ease-out
+        forwards;
+}
+
+.leave{
+    animation:
+        customerLeave
+        .7s
+        ease-in
+        forwards;
+}
+
+@keyframes customerArrive{
+
+    from{
+
+        transform:
+            translateX(-400px);
+
+        opacity:0;
+    }
+
+    to{
+
+        transform:
+            translateX(-50%);
+
+        opacity:1;
+    }
+
+}
+
+@keyframes customerLeave{
+
+    from{
+
+        transform:
+            translateX(-50%);
+
+        opacity:1;
+    }
+
+    to{
+
+        transform:
+            translateX(400px);
+
+        opacity:0;
+    }
+
+}
+
+/* =========================
+   COMPTOIR
+========================= */
+
+#counter{
+
+    position:absolute;
+
+    left:0;
+    right:0;
+
+    bottom:0;
+
+    height:22%;
+
+    min-height:55px;
+
+    background:
+        linear-gradient(
+            #efbd7c 0 15%,
+            #a85f31 15% 100%
+        );
+
+    border-top:7px solid #ffe2b2;
+
+    z-index:10;
+}
+
+/* =========================
+   CUISINE
+========================= */
+
+#kitchen{
+
+    min-height:0;
+
+    height:390px;
+
+    background:#202020;
+
+    border-top:4px solid #111;
+
+    display:grid;
+
+    grid-template-columns:
+        1.2fr
+        1fr
+        1fr;
+
+    gap:10px;
+
+    padding:10px;
+
+    overflow:hidden;
+}
+
+.panel{
+
+    background:#303030;
+
+    border:2px solid #555;
+
+    border-radius:14px;
+
+    padding:10px;
+
+    min-height:0;
+
+    overflow:auto;
+}
+
+.panel h2{
+
+    margin:0 0 8px;
+
+    font-size:16px;
+
+    color:#ffd166;
+}
+
+/* =========================
+   ALIMENTS
+========================= */
+
+#foodButtons{
+
+    display:flex;
+
+    gap:5px;
+
+    flex-wrap:wrap;
+}
+
+.foodBtn{
+
+    width:43px;
+    height:43px;
+
+    border:0;
+
+    border-radius:10px;
+
+    background:#444;
+
+    font-size:22px;
+
+    cursor:pointer;
+
+    transition:.15s;
+}
+
+.foodBtn:hover{
+
+    transform:
+        translateY(-3px);
+
+    background:#ff8a00;
+}
+
+/* =========================
+   PLATEAU
+========================= */
+
+#plate{
+
+    min-height:55px;
+
+    background:#181818;
+
+    border:2px dashed #777;
+
+    border-radius:10px;
+
+    padding:6px;
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:3px;
+
+    font-size:21px;
+}
+
+.emptyPlate{
+
+    width:100%;
+
+    text-align:center;
+
+    color:#888;
+
+    font-size:12px;
+
+    padding-top:14px;
+}
+
+/* =========================
+   BOUTONS
+========================= */
+
+.actionBtn{
+
+    width:100%;
+
+    margin-top:6px;
+
+    padding:8px;
+
+    border:0;
+
+    border-radius:8px;
+
+    color:white;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    font-size:12px;
+}
+
+#serveBtn{
+    background:#2fbd68;
+}
+
+#clearBtn{
+    background:#d94b4b;
+}
+
+/* =========================
+   COMMANDE
+========================= */
+
+#orderBox{
+
+    background:#181818;
+
+    border-radius:10px;
+
+    padding:10px;
+
+    min-height:90px;
+
+    font-size:13px;
+}
+
+#orderText{
+    line-height:1.5;
+}
+
+#reward{
+
+    color:#42e57c;
+
+    font-weight:bold;
+
+    margin-top:7px;
+}
+
+/* =========================
+   CHRONO
+========================= */
+
+#timer{
+
+    margin-top:10px;
+
+    padding:10px;
+
+    background:#333;
+
+    border:2px solid #ffd166;
+
+    border-radius:8px;
+
+    text-align:center;
+
+    font-weight:bold;
+
+    font-size:16px;
+
+    color:#ffd166;
+}
+
+/* =========================
+   RECETTES
+========================= */
+
+.recipe{
+
+    background:#444;
+
+    padding:7px;
+
+    border-radius:8px;
+
+    margin-bottom:6px;
+
+    font-size:11px;
+}
+
+.buyBtn{
+
+    margin-top:5px;
+
+    padding:5px 8px;
+
+    background:#ff9800;
+
+    border:0;
+
+    border-radius:6px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+#message{
+
+    position:fixed;
+
+    top:85px;
+    left:50%;
+
+    transform:
+        translateX(-50%)
+        translateY(-20px);
+
+    background:#222;
+
+    border:2px solid #ffd34e;
+
+    border-radius:12px;
+
+    padding:10px 18px;
+
+    font-weight:bold;
+
+    opacity:0;
+
+    pointer-events:none;
+
+    transition:.2s;
+
+    z-index:1000;
+}
+
+#message.show{
+
+    opacity:1;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+}
+
+/* =========================
+   PAUSE
+========================= */
+
+#pauseOverlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+        rgba(0,0,0,.55);
+
+    display:none;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:45px;
+
+    font-weight:bold;
+
+    z-index:999;
+
+    pointer-events:none;
+}
+
+#pauseOverlay.show{
+    display:flex;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+
+    #game{
+
+        grid-template-rows:
+            60px
+            minmax(180px,1fr)
+            390px;
+    }
+
+    #topbar{
+        padding:6px 8px;
+    }
+
+    .logo{
+        font-size:14px;
+    }
+
+    .stats{
+        gap:4px;
+    }
+
+    .stat{
+
+        padding:5px 6px;
+
+        font-size:10px;
+    }
+
+    #pauseBtn{
+
+        padding:5px 7px;
+
+        font-size:9px;
+    }
+
+    #restaurantSign{
+
+        font-size:15px;
+
+        padding:7px 15px;
+    }
+
+    #customerArea{
+        width:100%;
+        bottom:-20px;
+    }
+
+    #speech{
+
+        top:150px;
+
+        width:280px;
+
+        font-size:12px;
+
+        padding:8px;
+    }
+
+    #customer{
+        bottom:-60px;
+    }
+
+    #kitchen{
+
+        height:390px;
+
+        grid-template-columns:
+            1.2fr
+            1fr
+            1fr;
+
+        gap:5px;
+
+        padding:5px;
+    }
+
+    .panel{
+        padding:6px;
+    }
+
+    .panel h2{
+        font-size:11px;
+    }
+
+    .foodBtn{
+
+        width:34px;
+        height:34px;
+
+        font-size:17px;
+    }
+
+    .recipe{
+        font-size:9px;
+    }
+
+    #orderBox{
+
+        font-size:10px;
+
+        padding:6px;
+    }
+
+    .actionBtn{
+
+        font-size:9px;
+
+        padding:7px 3px;
+    }
+
+    #timer{
+
+        font-size:12px;
+
+        padding:7px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<audio id="bgMusic" loop>
+    <source src="musique.mp3" type="audio/mpeg">
+</audio>
+
+<div id="game">
+
+    <div id="topbar">
+
+        <div class="logo">
+            🍔 BURGER BLAST
+        </div>
+
+        <div class="stats">
+
+            <div class="stat">
+                💰 <span id="money">0</span> €
+            </div>
+
+            <div class="stat">
+                👥 <span id="served">0</span>
+            </div>
+
+            <div class="stat">
+                ⭐ <span id="level">1</span>
+            </div>
+
+            <button id="pauseBtn" onclick="togglePause()">
+                ⏸️ PAUSE
+            </button>
+
+        </div>
+
+    </div>
+
+    <div id="restaurant">
+
+        <div id="wallPattern"></div>
+
+        <div class="light"></div>
+        <div class="light"></div>
+        <div class="light"></div>
+        <div class="light"></div>
+
+        <div id="restaurantSign">
+            🍔 BURGER BLAST 🍟
+        </div>
+
+        <div id="customerArea">
+
+            <div id="speech"></div>
+
+            <div id="customer" style="display:none">
+
+                <div class="customerHead">
+
+                    <div class="hair"></div>
+
+                    <div class="eyes">
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                </div>
+
+                <div class="customerBody"></div>
+
+                <div class="customerName" id="customerName">
+                    Client
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="counter"></div>
+
+    </div>
+
+    <div id="kitchen">
+
+        <div class="panel">
+
+            <h2>👨‍🍳 Préparation</h2>
+
+            <div id="foodButtons">
+
+                <button class="foodBtn" onclick="addFood('🍞')">🍞</button>
+                <button class="foodBtn" onclick="addFood('🥩')">🥩</button>
+                <button class="foodBtn" onclick="addFood('🧀')">🧀</button>
+                <button class="foodBtn" onclick="addFood('🥬')">🥬</button>
+                <button class="foodBtn" onclick="addFood('🍅')">🍅</button>
+                <button class="foodBtn" onclick="addFood('🥓')">🥓</button>
+                <button class="foodBtn" onclick="addFood('🍗')">🍗</button>
+                <button class="foodBtn" onclick="addFood('🍟')">🍟</button>
+                <button class="foodBtn" onclick="addFood('🥤')">🥤</button>
+                <button class="foodBtn" onclick="addFood('🌭')">🌭</button>
+                <button class="foodBtn" onclick="addFood('🍕')">🍕</button>
+                <button class="foodBtn" onclick="addFood('🥪')">🥪</button>
+                <button class="foodBtn" onclick="addFood('🌶️')">🌶️</button>
+
+            </div>
+
+            <h2 style="margin-top:10px">
+                🍽️ Plateau
+            </h2>
+
+            <div id="plate">
+
+                <div class="emptyPlate">
+                    Ton plateau est vide
+                </div>
+
+            </div>
+
+            <button
+                id="serveBtn"
+                class="actionBtn"
+                onclick="serveCustomer()"
+            >
+                🍽️ SERVIR
+            </button>
+
+            <button
+                id="clearBtn"
+                class="actionBtn"
+                onclick="clearPlate()"
+            >
+                🗑️ VIDER
+            </button>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>
+                🧑 Commande
+            </h2>
+
+            <div id="orderBox">
+
+                <div id="orderText">
+                    ⏳ En attente...
+                </div>
+
+                <div id="reward"></div>
+
+                <div id="timer">
+                    ⏱️ Temps : 30s
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>
+                📖 Recettes
+            </h2>
+
+            <div id="recipes"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="message"></div>
+
+<div id="pauseOverlay">
+    ⏸️ PAUSE
+</div>
+
+<script>
+
+/* =========================
+   VARIABLES
+========================= */
+
+let money = 0;
+let served = 0;
+let level = 1;
+
+let plate = [];
+
+let currentCustomer = null;
+
+let customerPresent = false;
+
+let customerHistory = [];
+
+let customerTimer = null;
+
+let timeLeft = 30;
+
+let customerLeaving = false;
+
+let gamePaused = false;
+
+/* =========================
+   PRIX
+========================= */
+
+const foodPrices = {
+
+    "🍞":2,
+    "🥩":5,
+    "🧀":2,
+    "🥬":2,
+    "🍅":2,
+    "🥓":3,
+    "🍗":2,
+    "🍟":3,
+    "🥤":3,
+    "🌭":6,
+    "🍕":8,
+    "🥪":6,
+    "🌶️":2
+
+};
+
+/* =========================
+   RECETTES
+========================= */
+
+let recipes = [
+
+    {
+        name:"Burger",
+        items:["🍞","🥩","🍞"],
+        unlocked:true,
+        price:0
+    },
+
+    {
+        name:"Cheeseburger",
+        items:["🍞","🥩","🧀","🍞"],
+        unlocked:true,
+        price:0
+    },
+
+    {
+        name:"Frites",
+        items:["🍟"],
+        unlocked:true,
+        price:0
+    },
+
+    {
+        name:"Boisson",
+        items:["🥤"],
+        unlocked:true,
+        price:0
+    },
+
+    {
+        name:"Nuggets x5",
+        items:["🍗","🍗","🍗","🍗","🍗"],
+        unlocked:false,
+        price:35
+    },
+
+    {
+        name:"Menu Burger",
+        items:[
+            "🍞",
+            "🥩",
+            "🧀",
+            "🍞",
+            "🍟",
+            "🥤"
+        ],
+        unlocked:false,
+        price:50
+    },
+
+    {
+        name:"Menu Nuggets",
+        items:[
+            "🍗",
+            "🍗",
+            "🍗",
+            "🍗",
+            "🍗",
+            "🍟",
+            "🥤"
+        ],
+        unlocked:false,
+        price:70
+    },
+
+    {
+        name:"Bacon Burger",
+        items:[
+            "🍞",
+            "🥩",
+            "🥓",
+            "🧀",
+            "🍞"
+        ],
+        unlocked:false,
+        price:80
+    },
+
+    {
+        name:"Burger Healthy",
+        items:[
+            "🍞",
+            "🥩",
+            "🥬",
+            "🍅",
+            "🍞"
+        ],
+        unlocked:false,
+        price:90
+    },
+
+    {
+        name:"Spicy Burger",
+        items:[
+            "🍞",
+            "🥩",
+            "🧀",
+            "🌶️",
+            "🍞"
+        ],
+        unlocked:false,
+        price:110
+    },
+
+    {
+        name:"Double Burger",
+        items:[
+            "🍞",
+            "🥩",
+            "🥩",
+            "🍞"
+        ],
+        unlocked:false,
+        price:120
+    },
+
+    {
+        name:"Chicken Burger",
+        items:[
+            "🍞",
+            "🍗",
+            "🥬",
+            "🍅",
+            "🍞"
+        ],
+        unlocked:false,
+        price:150
+    },
+
+    {
+        name:"Pizza",
+        items:["🍕"],
+        unlocked:false,
+        price:180
+    },
+
+    {
+        name:"Menu Pizza",
+        items:["🍕","🍟","🥤"],
+        unlocked:false,
+        price:215
+    },
+
+    {
+        name:"Sandwich",
+        items:["🥪"],
+        unlocked:false,
+        price:250
+    },
+
+    {
+        name:"Mega Burger",
+        items:[
+            "🍞",
+            "🥩",
+            "🧀",
+            "🥬",
+            "🍅",
+            "🥩",
+            "🍞"
+        ],
+        unlocked:false,
+        price:300
+    }
+
+];
+
+/* =========================
+   NOMS CLIENTS
+========================= */
+
+const names = [
+
+    "Lucas",
+    "Emma",
+    "Tom",
+    "Léo",
+    "Sarah",
+    "Noah",
+    "Jules",
+    "Lina",
+    "Hugo",
+    "Chloé",
+    "Nathan",
+    "Camille"
+
+];
+
+/* =========================
+   PAUSE
+========================= */
+
+function togglePause(){
+
+    gamePaused = !gamePaused;
+
+    const button =
+        document.getElementById("pauseBtn");
+
+    const overlay =
+        document.getElementById("pauseOverlay");
+
+    if(gamePaused){
+
+        clearInterval(customerTimer);
+
+        button.textContent =
+            "▶️ REPRENDRE";
+
+        overlay.classList.add("show");
+
+    }else{
+
+        button.textContent =
+            "⏸️ PAUSE";
+
+        overlay.classList.remove("show");
+
+        if(currentCustomer){
+
+            startCustomerTimer(false);
+
+        }
+
+    }
+
+}
+
+/* =========================
+   CHRONO
+========================= */
+
+function startCustomerTimer(reset = true){
+
+    clearInterval(customerTimer);
+
+    if(reset){
+
+        timeLeft = 30;
+
+    }
+
+    document.getElementById("timer").textContent =
+        "⏱️ Temps : " +
+        timeLeft +
+        "s";
+
+    customerTimer = setInterval(() => {
+
+        if(gamePaused || !currentCustomer){
+            return;
+        }
+
+        timeLeft--;
+
+        document.getElementById("timer").textContent =
+            "⏱️ Temps : " +
+            timeLeft +
+            "s";
+
+        if(timeLeft <= 0){
+
+            clearInterval(customerTimer);
+
+            document.getElementById("timer").textContent =
+                "⏰ Trop tard !";
+
+            showMessage(
+                "⏰ Trop tard ! Le client est parti !"
+            );
+
+            customerLeave();
+
+        }
+
+    },1000);
+
+}
+
+/* =========================
+   NOUVEAU CLIENT
+========================= */
+
+function spawnCustomer(){
+
+    if(gamePaused){
+
+        setTimeout(
+            spawnCustomer,
+            500
+        );
+
+        return;
+    }
+
+    if(customerPresent || currentCustomer){
+        return;
+    }
+
+    customerLeaving = false;
+
+    customerPresent = true;
+
+    const available =
+        recipes.filter(
+            recipe =>
+                recipe.unlocked
+        );
+
+    let possible =
+        [...available];
+
+    if(
+        customerHistory.length >= 2 &&
+        customerHistory[0] === customerHistory[1]
+    ){
+
+        possible =
+            available.filter(
+                recipe =>
+                    recipe.name !==
+                    customerHistory[0]
+            );
+
+    }
+
+    const recipe =
+        possible[
+            Math.floor(
+                Math.random() *
+                possible.length
+            )
+        ];
+
+    customerHistory.push(
+        recipe.name
+    );
+
+    if(customerHistory.length > 2){
+
+        customerHistory.shift();
+
+    }
+
+    const name =
+        names[
+            Math.floor(
+                Math.random() *
+                names.length
+            )
+        ];
+
+    currentCustomer = {
+
+        name:name,
+        recipe:recipe
+
+    };
+
+    const customer =
+        document.getElementById(
+            "customer"
+        );
+
+    const speech =
+        document.getElementById(
+            "speech"
+        );
+
+    speech.classList.remove(
+        "show"
+    );
+
+    customer.style.display =
+        "block";
+
+    customer.classList.remove(
+        "leave",
+        "arrive"
+    );
+
+    void customer.offsetWidth;
+
+    customer.classList.add(
+        "arrive"
+    );
+
+    document.getElementById(
+        "customerName"
+    ).textContent = name;
+
+    updateOrder();
+
+    startCustomerTimer(true);
+
+    setTimeout(() => {
+
+        if(
+            !currentCustomer ||
+            gamePaused
+        ){
+            return;
+        }
+
+        speech.innerHTML =
+            "💬 Bonjour ! Je voudrais :<br><b>" +
+            recipe.name +
+            "</b><br>" +
+            recipe.items.join(" ");
+
+        speech.classList.add(
+            "show"
+        );
+
+    },500);
+
+}
+
+/* =========================
+   PRIX COMMANDE
+========================= */
+
+function getOrderPrice(items){
+
+    let total = 0;
+
+    items.forEach(item => {
+
+        total +=
+            foodPrices[item] || 0;
+
+    });
+
+    return total;
+
+}
+
+/* =========================
+   AFFICHER COMMANDE
+========================= */
+
+function updateOrder(){
+
+    const order =
+        document.getElementById(
+            "orderText"
+        );
+
+    const reward =
+        document.getElementById(
+            "reward"
+        );
+
+    if(!currentCustomer){
+
+        order.textContent =
+            "⏳ En attente...";
+
+        reward.textContent =
+            "";
+
+        return;
+    }
+
+    order.innerHTML =
+        "<b>" +
+        currentCustomer.name +
+        "</b> veut :<br>" +
+        currentCustomer.recipe.name +
+        "<br>" +
+        currentCustomer.recipe.items.join(" ");
+
+    reward.textContent =
+        "💰 Tu vas gagner : " +
+        getOrderPrice(
+            currentCustomer.recipe.items
+        ) +
+        " €";
+
+}
+
+/* =========================
+   AJOUTER ALIMENT
+========================= */
+
+function addFood(food){
+
+    if(gamePaused){
+        return;
+    }
+
+    if(!currentCustomer){
+
+        showMessage(
+            "⏳ Attends un client !"
+        );
+
+        return;
+    }
+
+    plate.push(food);
+
+    renderPlate();
+
+}
+
+/* =========================
+   PLATEAU
+========================= */
+
+function renderPlate(){
+
+    const plateDiv =
+        document.getElementById(
+            "plate"
+        );
+
+    plateDiv.innerHTML =
+        "";
+
+    if(plate.length === 0){
+
+        plateDiv.innerHTML =
+            '<div class="emptyPlate">Ton plateau est vide</div>';
+
+        return;
+    }
+
+    plate.forEach(food => {
+
+        const item =
+            document.createElement(
+                "span"
+            );
+
+        item.textContent =
+            food;
+
+        plateDiv.appendChild(
+            item
+        );
+
+    });
+
+}
+
+function clearPlate(){
+
+    if(gamePaused){
+        return;
+    }
+
+    plate = [];
+
+    renderPlate();
+
+}
+
+/* =========================
+   VERIFIER COMMANDE
+========================= */
+
+function sameOrder(a,b){
+
+    if(a.length !== b.length){
+        return false;
+    }
+
+    const x =
+        [...a].sort();
+
+    const y =
+        [...b].sort();
+
+    for(
+        let i = 0;
+        i < x.length;
+        i++
+    ){
+
+        if(x[i] !== y[i]){
+            return false;
+        }
+
+    }
+
+    return true;
+
+}
+
+/* =========================
+   SERVIR CLIENT
+========================= */
+
+function serveCustomer(){
+
+    if(gamePaused){
+        return;
+    }
+
+    if(!currentCustomer){
+
+        showMessage(
+            "❌ Aucun client !"
+        );
+
+        return;
+    }
+
+    const wanted =
+        currentCustomer.recipe.items;
+
+    if(
+        !sameOrder(
+            plate,
+            wanted
+        )
+    ){
+
+        showMessage(
+            "❌ Mauvaise commande !"
+        );
+
+        return;
+    }
+
+    clearInterval(
+        customerTimer
+    );
+
+    const gain =
+        getOrderPrice(
+            wanted
+        );
+
+    money += gain;
+
+    served++;
+
+    if(served % 5 === 0){
+
+        level++;
+
+    }
+
+    updateStats();
+
+    showMessage(
+        "✅ Commande servie ! +" +
+        gain +
+        " €"
+    );
+
+    customerLeave();
+
+}
+
+/* =========================
+   CLIENT PART
+========================= */
+
+function customerLeave(){
+
+    if(customerLeaving){
+        return;
+    }
+
+    customerLeaving = true;
+
+    clearInterval(
+        customerTimer
+    );
+
+    const customer =
+        document.getElementById(
+            "customer"
+        );
+
+    document
+        .getElementById(
+            "speech"
+        )
+        .classList.remove(
+            "show"
+        );
+
+    customer.classList.remove(
+        "arrive"
+    );
+
+    customer.classList.add(
+        "leave"
+    );
+
+    plate = [];
+
+    renderPlate();
+
+    currentCustomer = null;
+
+    updateOrder();
+
+    setTimeout(() => {
+
+        customer.style.display =
+            "none";
+
+        customerPresent = false;
+
+        customerLeaving = false;
+
+        document.getElementById(
+            "timer"
+        ).textContent =
+            "⏳ Prochain client...";
+
+        setTimeout(() => {
+
+            spawnCustomer();
+
+        },2500);
+
+    },700);
+
+}
+
+/* =========================
+   RECETTES
+========================= */
+
+function renderRecipes(){
+
+    const list =
+        document.getElementById(
+            "recipes"
+        );
+
+    list.innerHTML =
+        "";
+
+    recipes.forEach(
+        (recipe,index) => {
+
+            if(recipe.unlocked){
+                return;
+            }
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.className =
+                "recipe";
+
+            div.innerHTML =
+                "🔒 <b>" +
+                recipe.name +
+                "</b><br>" +
+                recipe.items.join(" ") +
+                "<br>" +
+                "<button class='buyBtn' onclick='buyRecipe(" +
+                index +
+                ")'>Acheter " +
+                recipe.price +
+                " €</button>";
+
+            list.appendChild(
+                div
+            );
+
+        }
+    );
+
+    if(list.innerHTML === ""){
+
+        list.innerHTML =
+            "🎉 Toutes les recettes sont débloquées !";
+
+    }
+
+}
+
+/* =========================
+   ACHETER RECETTE
+========================= */
+
+function buyRecipe(index){
+
+    if(gamePaused){
+        return;
+    }
+
+    const recipe =
+        recipes[index];
+
+    if(money < recipe.price){
+
+        showMessage(
+            "💸 Pas assez d'argent !"
+        );
+
+        return;
+    }
+
+    money -=
+        recipe.price;
+
+    recipe.unlocked =
+        true;
+
+    updateStats();
+
+    renderRecipes();
+
+    showMessage(
+        "🎉 Nouvelle recette : " +
+        recipe.name
+    );
+
+}
+
+/* =========================
+   STATS
+========================= */
+
+function updateStats(){
+
+    document.getElementById(
+        "money"
+    ).textContent =
+        money;
+
+    document.getElementById(
+        "served"
+    ).textContent =
+        served;
+
+    document.getElementById(
+        "level"
+    ).textContent =
+        level;
+
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+let messageTimer;
+
+function showMessage(text){
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+    clearTimeout(
+        messageTimer
+    );
+
+    message.textContent =
+        text;
+
+    message.classList.add(
+        "show"
+    );
+
+    messageTimer =
+        setTimeout(() => {
+
+            message.classList.remove(
+                "show"
+            );
+
+        },2000);
+
+}
+
+/* =========================
+   DEMARRAGE
+========================= */
+
+updateStats();
+
+renderPlate();
+
+renderRecipes();
+
+setTimeout(() => {
+
+    spawnCustomer();
+
+},1000);
+
+</script>
+
+</body>
+</html>
